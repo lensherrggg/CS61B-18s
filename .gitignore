@@ -4,5 +4,6 @@
 out/
 *.iml
 .project
-*.DS_Store
+.DS_Store
+*/.DS_Store
 logs
