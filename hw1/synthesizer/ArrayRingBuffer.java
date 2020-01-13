@@ -35,6 +35,7 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
      * throw new RuntimeException("Ring buffer overflow"). Exceptions
      * covered Monday.
      */
+    @Override
     public void enqueue(T x) {
         // TODO: Enqueue the item. Don't forget to increase fillCount and update last.
         if (isFull()) {
@@ -50,6 +51,7 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
      * throw new RuntimeException("Ring buffer underflow"). Exceptions
      * covered Monday.
      */
+    @Override
     public T dequeue() {
         // TODO: Dequeue the first item. Don't forget to decrease fillCount and update
         if (isEmpty()) {
@@ -64,6 +66,7 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
     /**
      * Return oldest item, but don't remove it.
      */
+    @Override
     public T peek() {
         // TODO: Return the first item. None of your instance variables should change.
         if (isEmpty()) {
@@ -73,4 +76,32 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
     }
 
     // TODO: When you get to part 5, implement the needed code to support iteration.
+    
+    @Override
+    public Iterator<T> iterator() {
+        return new MyIterator();
+    }
+
+    private class MyIterator implements Iterator<T> {
+        private int current;
+        private int count;
+
+        public MyIterator() {
+            current = first;
+            count = 0;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return count < fillCount();
+        }
+
+        @Override
+        public T next() {
+            T currentItem = rb[first];
+            current = (current + 1) % capacity;
+            count++;
+            return currentItem;
+        }
+    }
 }
