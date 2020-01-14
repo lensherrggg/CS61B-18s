@@ -6,6 +6,17 @@ public class Hallway {
     Position corner;
     String type;
 
+    public Hallway(Position e1, Position e2) {
+        end1 = e1;
+        end2 = e2;
+        if (e1.getX() == e2.getX()) {
+            corner = new Position(e1.getX(), (e1.getY() + e2.getY()) / 2);
+        }
+        if (e1.getY() == e2.getY()) {
+            corner = new Position((e1.getX() + e2.getX()) / 2, e1.getY());
+        }
+    }
+
     public Hallway(Position e1, Position e2, Position c) {
         end1 = e1;
         end2 = e2;

@@ -4,6 +4,7 @@ import byog.TileEngine.TERenderer;
 import byog.TileEngine.TETile;
 import byog.TileEngine.Tileset;
 
+import javax.imageio.plugins.tiff.TIFFDirectory;
 import java.util.Random;
 import java.util.List;
 import java.util.LinkedList;
@@ -61,7 +62,7 @@ public class MapGenerator {
         int height = world.getHeightOfWorld();
         map = new TETile[width][height];
         for (int i = 0; i < width; i++) {
-            for (int j = 0; j < width; j++) {
+            for (int j = 0; j < height; j++) {
                 map[i][j] = Tileset.NOTHING;
             }
         }
@@ -73,6 +74,14 @@ public class MapGenerator {
             throw new IllegalArgumentException("Position out of border");
         }
         return map[pos.getX()][pos.getY()];
+    }
+
+    public TETile[][] getMap() {
+        return map;
+    }
+
+    public World getWorld() {
+        return world;
     }
 
     /** Make initial entrance */
@@ -212,10 +221,41 @@ public class MapGenerator {
         }
     }
 
+    /** Make hallway with floors in the middle and walls on both sides */
     public void makeHallway(Hallway hallway) {
+        if (hallway.getType().equals("HZ")) {
+            int x1 = Math.min(hallway.end1.getX(), hallway.end2.getX());
+            int x2 = Math.max(hallway.end1.getX(), hallway.end2.getX());
+            int y = hallway.end1.getY();
+            for (int i = x1; i <= x2; i++) {
+                map[i][y] = Tileset.FLOOR;
+                if (getTile(new Position(i, y - 1)).equals(Tileset.NOTHING)) {
+                    map[i][y - 1] = Tileset.WALL;
+                }
+                if (getTile(new Position(i, y + 1)).equals(Tileset.NOTHING)) {
+                    map[i][y + 1] = Tileset.WALL;
+                }
+            }
+        }
+        if (hallway.getType().equals("VT")) {
+            int y1 = Math.min(hallway.end1.getY(), hallway.end2.getY());
+            int y2 = Math.max(hallway.end1.getY(), hallway.end2.getY());
+            int x = hallway.end1.getX();
+            for (int i = y1; i <= y2; i++) {
+                map[x][i] = Tileset.FLOOR;
+                if (getTile(new Position(x - 1, i)).equals(Tileset.NOTHING)) {
+                    map[x - 1][i] = Tileset.WALL;
+                }
+                if (getTile(new Position(x + 1, i)).equals(Tileset.NOTHING)) {
+                    map[x + 1][i] = Tileset.WALL;
+                }
+            }
+        }
         makeVerticalHallway(hallway);
         makeHorizontalHallway(hallway);
-        makeHallwayCorner(hallway);
+        if (!hallway.getType().equals("VT") && !hallway.getType().equals("HZ")) {
+            makeHallwayCorner(hallway);
+        }
     }
 
     public void makeVerticalHallway(Hallway hallway) {
@@ -225,16 +265,31 @@ public class MapGenerator {
         int x1 = Math.min(hallway.end1.getX(), hallway.end2.getX());
         int x2 = Math.max(hallway.end1.getX(), hallway.end2.getX());
         int y = hallway.corner.getY();
-//        for (int i = x1; i < x2 - 1; i++) {
-//            map[i][y] = Tileset.FLOOR;
-//            if (getTile(new Position(i, y - 1)) == Tileset.NOTHING) {
-//                map[i][y - 1] = Tileset.WALL;
-//            }
-//            if (getTile(new Position(i, y + 1)) == Tileset.NOTHING) {
-//                map[i][y + 1] = Tileset.WALL;
-//            }
-//        }
         // add tile
+        if (hallway.getType().equals("LB") || hallway.getType().equals("LT")) {
+            for (int i = x1 + 2; i <= x2; i++) {
+                map[i][y] = Tileset.FLOOR;
+                if (getTile((new Position(i, y - 1))).equals(Tileset.NOTHING)) {
+                    map[i][y - 1] = Tileset.WALL;
+                }
+                if (getTile(new Position(i, y + 1)).equals(Tileset.NOTHING)) {
+                    map[i][y + 1] = Tileset.WALL;
+                }
+            }
+        }
+
+        if (hallway.getType().equals("RB") || hallway.getType().equals("RT")) {
+            for (int i = x1; i < x2 - 1; i++) {
+                map[i][y] = Tileset.FLOOR;
+                if (getTile((new Position(i, y - 1))).equals(Tileset.NOTHING)) {
+                    map[i][y - 1] = Tileset.WALL;
+                }
+                if (getTile(new Position(i, y + 1)).equals(Tileset.NOTHING)) {
+                    map[i][y + 1] = Tileset.WALL;
+                }
+            }
+        }
+
     }
 
     public void makeHorizontalHallway(Hallway hallway) {
@@ -245,10 +300,67 @@ public class MapGenerator {
         int y2 = Math.max(hallway.end1.getY(), hallway.end2.getY());
         int x = hallway.corner.getX();
         // add tile
+        if (hallway.getType().equals("LB") || hallway.getType().equals("RB")) {
+            for (int i = y1 + 2; i <= y2; i++) {
+                map[x][i] = Tileset.FLOOR;
+                if (getTile(new Position(x - 1, i)).equals(Tileset.NOTHING)) {
+                    map[x - 1][i] = Tileset.WALL;
+                }
+                if (getTile(new Position(x + 1, i)).equals(Tileset.NOTHING)) {
+                    map[x + 1][i] = Tileset.WALL;
+                }
+            }
+        }
+
+        if (hallway.getType().equals("LT") || hallway.getType().equals("RT")) {
+            for (int i = y1; i < y2 - 1; i++) {
+                map[x][i] = Tileset.FLOOR;
+                if (getTile(new Position(x - 1, i)).equals(Tileset.NOTHING)) {
+                    map[x - 1][i] = Tileset.WALL;
+                }
+                if (getTile(new Position(x + 1, i)).equals(Tileset.NOTHING)) {
+                    map[x + 1][i] = Tileset.WALL;
+                }
+            }
+        }
+
     }
 
     public void makeHallwayCorner(Hallway hallway) {
-
+        int xC = hallway.corner.getX();
+        int yC = hallway.corner.getY();
+        map[xC][yC] = Tileset.FLOOR;
+        map[xC - 1][yC - 1] = Tileset.WALL;
+        map[xC + 1][yC + 1] = Tileset.WALL;
+        map[xC + 1][yC - 1] = Tileset.WALL;
+        map[xC - 1][yC + 1] = Tileset.WALL;
+        switch (hallway.type) {
+            case "LB":
+                map[xC - 1][yC] = Tileset.WALL;
+                map[xC][yC - 1] = Tileset.WALL;
+                map[xC + 1][yC] = Tileset.FLOOR;
+                map[xC][yC + 1] = Tileset.FLOOR;
+                break;
+            case "LT":
+                map[xC - 1][yC] = Tileset.WALL;
+                map[xC][yC + 1] = Tileset.WALL;
+                map[xC + 1][yC] = Tileset.FLOOR;
+                map[xC][yC - 1] = Tileset.FLOOR;
+                break;
+            case "RB":
+                map[xC + 1][yC] = Tileset.WALL;
+                map[xC][yC - 1] = Tileset.WALL;
+                map[xC - 1][yC] = Tileset.FLOOR;
+                map[xC][yC + 1] = Tileset.FLOOR;
+                break;
+            case "RT":
+                map[xC + 1][yC] = Tileset.WALL;
+                map[xC][yC + 1] = Tileset.WALL;
+                map[xC - 1][yC] = Tileset.FLOOR;
+                map[xC][yC - 1] = Tileset.FLOOR;
+                break;
+            default: break;
+        }
     }
 
     /** Get the reverse of a given direction */
