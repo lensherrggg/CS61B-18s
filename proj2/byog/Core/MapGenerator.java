@@ -363,6 +363,82 @@ public class MapGenerator {
         }
     }
 
+    public boolean checkHallwayAvailability(Hallway hallway) {
+        int x1 = Math.min(hallway.end1.getX(), hallway.end2.getX());
+        int x2 = Math.max(hallway.end1.getX(), hallway.end2.getX());
+        int y1 = Math.min(hallway.end1.getY(), hallway.end2.getY());
+        int y2 = Math.max(hallway.end1.getY(), hallway.end2.getY());
+        int xC = hallway.corner.getX();
+        int yC = hallway.corner.getY();
+        switch (hallway.getType()) {
+            case "HZ":
+                for (int i = x1; i <= x2; i++) {
+                    if (!map[i][y1].equals(Tileset.NOTHING)) {
+                        return false;
+                    }
+                }
+                break;
+            case "VT":
+                for (int i = y1; i <= y2; i++) {
+                    if (!map[x1][i].equals(Tileset.NOTHING)) {
+                        return false;
+                    }
+                }
+                break;
+            case "LB":
+                for (int i = yC; i <= y2; i++) {
+                    if (!map[xC][i].equals(Tileset.NOTHING)) {
+                        return false;
+                    }
+                }
+                for (int i = xC; i <= x2; i++) {
+                    if (!map[i][yC].equals(Tileset.NOTHING)) {
+                        return false;
+                    }
+                }
+                break;
+            case "LT":
+                for (int i = y1; i <= yC; i++) {
+                    if (!map[xC][i].equals(Tileset.NOTHING)) {
+                        return false;
+                    }
+                }
+                for (int i = xC; i <= x2; i++) {
+                    if (!map[i][yC].equals(Tileset.NOTHING)) {
+                        return false;
+                    }
+                }
+                break;
+            case "RB":
+                for (int i = yC; i <= y2; i++) {
+                    if (!map[xC][i].equals(Tileset.NOTHING)) {
+                        return false;
+                    }
+                }
+                for (int i = x1; i <= xC; i++) {
+                    if (!map[i][yC].equals(Tileset.NOTHING)) {
+                        return false;
+                    }
+                }
+                break;
+            case "RT":
+                for (int i = y1; i <= yC; i++) {
+                    if (!map[xC][i].equals(Tileset.NOTHING)) {
+                        return false;
+                    }
+                }
+                for (int i = x1; i <= xC; i++) {
+                    if (!map[i][yC].equals(Tileset.NOTHING)) {
+                        return false;
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        return true;
+    }
+
     /** Get the reverse of a given direction */
     public String directionReverse(String direction) {
         switch(direction) {
