@@ -41,7 +41,7 @@ public class MapVisualTest {
         boolean check2 = mapGen.checkHallwayAvailability(hallway3);
         System.out.println(check2);
         mapGen.makeHallway(hallway3);
-        
+
 
 
 
