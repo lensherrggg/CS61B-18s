@@ -51,10 +51,10 @@ public class Solver {
         SearchNode currentNode = new SearchNode(initial, null);
         while (!currentNode.state.isGoal()) {
             for (WorldState nextState : currentNode.state.neighbors()) {
-                if (currentNode.prev == null || nextState.equals(currentNode.state.neighbors())) {
+                if (currentNode.prev == null || !nextState.equals(currentNode.state.neighbors())) {
                     SearchNode nextNode = new SearchNode(nextState, currentNode);
                     pq.insert(nextNode);
-                    searchedCount = 1;
+                    searchedCount += 1;
                 }
             }
             currentNode = pq.delMin();
