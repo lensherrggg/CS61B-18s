@@ -75,13 +75,41 @@ public class Board implements WorldState {
     /**
      * Hamming estimate described below*/
     public int hamming() {
-        return 0;
+        int estimatedDistance = 0;
+        int expectedValue = 1;
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < N; c++) {
+                if (expectedValue == N * N) {
+                    // break when hit the BLANK tile
+                    break;
+                }
+                if (tileAt(r, c) != expectedValue) {
+                    estimatedDistance += 1;
+                }
+                expectedValue += 1;
+            }
+
+        }
+        return estimatedDistance;
     }
 
     /**
      * Manhattan estimate described below*/
     public int manhattan() {
-        return 0;
+        int estimatedDistance = 0;
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < N; c++) {
+                int actualValue = tileAt(r, c);
+                if (actualValue == 0) {
+                    continue;
+                }
+                int expectedRow = (actualValue - 1) / N;
+                int expectedColumn = (actualValue - 1) % N;
+                estimatedDistance += Math.abs(expectedRow - r);
+                estimatedDistance += Math.abs(expectedColumn - c);
+            }
+        }
+        return estimatedDistance;
     }
 
     /**
@@ -89,14 +117,32 @@ public class Board implements WorldState {
      * simply return the results of manhattan() when submitted to
      * Gradescope.*/
     public int estimatedDistanceToGoal() {
-        return 0;
+//        return hamming();
+        return manhattan();
     }
 
     /**
      * Returns true if this board's tile values are the same
      * position as y's*/
     public boolean equals(Object y) {
-        return false;
+        if (this == y) {
+            return true;
+        }
+        if (y == null || y.getClass() != this.getClass()) {
+            return false;
+        }
+        Board otherBoard = (Board) y;
+        if (N != otherBoard.N) {
+            return false;
+        }
+        for (int r = 0; r < N; r++) {
+            for (int c = 0; c < N; c++) {
+                if (this.tileAt(r, c) != otherBoard.tileAt(r, c)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
     /** Returns the string representation of the board. 
       * Uncomment this method. */
