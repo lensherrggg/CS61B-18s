@@ -11,6 +11,7 @@ public class MazeCycles extends MazeExplorer {
     public int[] edgeTo;
     public boolean[] marked;
     */
+
     private int[] cameFrom;
     private boolean foundCircle = false;
 
@@ -20,25 +21,21 @@ public class MazeCycles extends MazeExplorer {
 
     private void dfs(int v) {
         for (int w : maze.adj(v)) {
-
             if (foundCircle) {
                 return;
             }
-
             if (!marked[w]) {
                 marked[w] = true;
                 cameFrom[w] = v;
                 dfs(w);
             } else if (w != cameFrom[v]) { // When `w` is not the parent of `v` (circle found)
                 cameFrom[w] = v;
-
                 int cur = v;    // Reconstruct circle
                 edgeTo[cur] = cameFrom[cur];
                 while (cur != w) {
                     cur = cameFrom[cur];
                     edgeTo[cur] = cameFrom[cur];
                 }
-
                 foundCircle = true;
                 return;
             }
@@ -48,7 +45,6 @@ public class MazeCycles extends MazeExplorer {
     @Override
     public void solve() {
         // TODO: Your code here!
-        /* Serves like `edgeTo`, created because I don't want to use `edgeTo` until circle found */
         cameFrom = new int[maze.V()];
 
         /* Set point where circle search starts */
