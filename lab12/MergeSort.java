@@ -35,7 +35,13 @@ public class MergeSort {
     private static <Item extends Comparable> Queue<Queue<Item>>
             makeSingleItemQueues(Queue<Item> items) {
         // Your code here!
-        return null;
+        Queue<Queue<Item>> singleItemQueues = new Queue<>();
+        for (Item item : items) {
+            Queue<Item> singleItemQueue = new Queue<Item>();
+            singleItemQueue.enqueue(item);
+            singleItemQueues.enqueue(singleItemQueue);
+        }
+        return singleItemQueues;
     }
 
     /**
@@ -54,13 +60,44 @@ public class MergeSort {
     private static <Item extends Comparable> Queue<Item> mergeSortedQueues(
             Queue<Item> q1, Queue<Item> q2) {
         // Your code here!
-        return null;
+        Queue<Item> ret = new Queue<>();
+        while (!q1.isEmpty() || !q2.isEmpty()) {
+            ret.enqueue(getMin(q1, q2));
+        }
+        return ret;
     }
 
     /** Returns a Queue that contains the given items sorted from least to greatest. */
     public static <Item extends Comparable> Queue<Item> mergeSort(
             Queue<Item> items) {
         // Your code here!
+        Queue<Queue<Item>> mSortQueue = makeSingleItemQueues(items);
+        while (mSortQueue.size() > 1) {
+            Queue<Item> q1 = mSortQueue.dequeue();
+            Queue<Item> q2 = mSortQueue.dequeue();
+            mSortQueue.enqueue(mergeSortedQueues(q1, q2));
+        }
+        items = mSortQueue.dequeue();
         return items;
+    }
+
+    public static void main(String[] args) {
+        Queue<String> students = new Queue<String>();
+        students.enqueue("Alice");
+        students.enqueue("Vanessa");
+        students.enqueue("Ethan");
+        students.enqueue("Josh");
+        students.enqueue("Frank");
+        students.enqueue("Steve");
+        students.enqueue("Natasha");
+        Queue<String> sortedStudents = mergeSort(students);
+        for (String s : students) {
+            System.out.print(s + " ");
+        }
+        System.out.println();
+        for (String s : sortedStudents) {
+            System.out.print(s + " ");
+        }
+        System.out.println();
     }
 }

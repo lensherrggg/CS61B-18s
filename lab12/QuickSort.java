@@ -56,4 +56,24 @@ public class QuickSort {
         // Your code here!
         return items;
     }
+
+    public static void main(String[] args) {
+        Queue<String> students = new Queue<String>();
+        students.enqueue("Alice");
+        students.enqueue("Vanessa");
+        students.enqueue("Ethan");
+        students.enqueue("Josh");
+        students.enqueue("Frank");
+        students.enqueue("Steve");
+        students.enqueue("Natasha");
+        Queue<String> sortedStudents = quickSort(students);
+        for (String s : students) {
+            System.out.print(s + " ");
+        }
+        System.out.println();
+        for (String s : sortedStudents) {
+            System.out.print(s + " ");
+        }
+        System.out.println();
+    }
 }
