@@ -1,10 +1,4 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Map;
 import java.util.List;
 
@@ -21,16 +15,41 @@ public class QuadTree {
         if (level == 1) {
             return node;
         } else {
+            // upper left child
             int index = node.index * 10 + 1;
             double latInterval = (node.upperLeftLatitude - node.lowerRightLatitude) / 2;
             double lonInterval = (node.lowerRightLongitude - node.upperLeftLongitude) / 2;
             double upperLeftLatitude = node.upperLeftLatitude;
             double upperLeftLongitude = node.upperLeftLongitude;
-            double lowerRightLatitude = node.lowerRightLatitude - latInterval;
+            double lowerRightLatitude = node.lowerRightLatitude + latInterval;
             double lowerRightLongitude = node.lowerRightLongitude - lonInterval;
-            Node child = new Node(index, upperLeftLongitude, upperLeftLatitude,
-                    lowerRightLongitude, lowerRightLatitude, imgAddress, level - 1);
             node.addChild(autoAddChild(node, level - 1));
+
+            // upper right child
+            index += 1;
+            lowerRightLongitude += lonInterval;
+            upperLeftLongitude += lonInterval;
+            Node child = new Node(index, upperLeftLongitude, upperLeftLatitude, lowerRightLongitude,
+                    lowerRightLatitude, imgAddress, level - 1);
+            node.addChild(autoAddChild(child, level - 1));
+
+            // lower left child
+            index += 1;
+            lowerRightLongitude -= lonInterval;
+            upperLeftLongitude -= lonInterval;
+            lowerRightLatitude -= latInterval;
+            upperLeftLatitude -= latInterval;
+            child = new Node(index, upperLeftLongitude, upperLeftLatitude, lowerRightLongitude,
+                    lowerRightLatitude, imgAddress, level - 1);
+            node.addChild(autoAddChild(child, level - 1));
+
+            // lower right child
+            index += 1;
+            lowerRightLongitude += lonInterval;
+            upperLeftLongitude += lonInterval;
+            child = new Node(index, upperLeftLongitude, upperLeftLatitude, lowerRightLongitude,
+                    lowerRightLatitude, imgAddress, level - 1);
+            node.addChild(autoAddChild(child, level - 1));
         }
         return node;
     }
@@ -41,14 +60,19 @@ public class QuadTree {
         double query_ulY = params.get("ullat");
         double query_lrX = params.get("lrlon");
         double query_lrY = params.get("lrlat");
+        // check if this node is valid
         if (n.intersectQueryBox(query_ulX, query_ulY, query_lrX, query_lrY)) {
+            // check if this node have the greatest LonDPP
             if (n.level != 1 && n.getLonDPP() > queryLonDPP) {
                 for (Node child : n.children) {
+                    // find suitable node from children
                     getRaster(params, child, queryLonDPP, result, nodeList);
                 }
             } else {
                 result.put("query_success", true);
+                // set depth
                 result.put("depth",root.level - n.level);
+                // set ul_lon, ul_lat, lr_lon, lr_lat
                 if (!result.containsKey("raster_ul_lon")) {
                     result.put("raster_ul_lon", n.upperLeftLongitude);
                     result.put("raster_ul_lat", n.upperLeftLatitude);
@@ -68,6 +92,7 @@ public class QuadTree {
                         result.put("raster_lr_lat", n.lowerRightLatitude);
                     }
                 }
+                // add node to list
                 if (nodeList.size() == 0) {
                     List<Node> row = new ArrayList<>();
                     row.add(n);
@@ -86,7 +111,7 @@ public class QuadTree {
                         }
                         index++;
                     }
-                    // do not find the row to contain this node
+                    // could not find the row to contain this node
                     // add a new row into the list
                     if (!existRow) {
                         List<Node> row = new ArrayList<>();
@@ -96,18 +121,22 @@ public class QuadTree {
                 }
             }
         } else {
+            // does not include any region of the query box
             return;
         }
     }
 
+    // insert node into the correct position of the row
     private void insertNodeIntoRow(Node n, List<Node> row){
         for (int i = 0; i < row.size(); i++) {
             Node compare = row.get(i);
             if (compare.upperLeftLongitude > n.upperLeftLongitude) {
+                // add this node into this position
                 row.add(i,n);
                 return;
             }
         }
+        // add this node into the last position
         row.add(n);
     }
 
