@@ -55,7 +55,7 @@ public class Rasterer {
         double queryUllat = params.get("ullat");
         double queryLrlon = params.get("lrlon");
         double queryLrlat = params.get("lrlat");
-        if (queryLrlon < queryUllon || queryLrlat >queryUllat) {
+        if (queryLrlon < queryUllon || queryLrlat > queryUllat) {
             throw new IllegalArgumentException("Wrong Longitude And Latitude");
         }
         double width = params.get("w");
