@@ -25,10 +25,12 @@ public class TestRasterer {
     private static final int NUM_TESTS = 8;
     private static Rasterer rasterer;
 
+    private static final String IMG_ROOT = "../library-sp18/data/proj3_imgs/";
+
 
     @Before
     public void setUp() throws Exception {
-        rasterer = new Rasterer();
+        rasterer = new Rasterer(IMG_ROOT);
     }
 
     @Test

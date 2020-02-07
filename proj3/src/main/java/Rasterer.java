@@ -1,5 +1,7 @@
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class provides all code necessary to take a query box and produce
@@ -8,9 +10,15 @@ import java.util.Map;
  * not draw the output correctly.
  */
 public class Rasterer {
+    public static final String IMGFORMAT = ".png";
+    private QuadTree qt;
 
-    public Rasterer() {
+    /** imgRoot is the name of the image directory*/
+    public Rasterer(String imgRoot) {
         // YOUR CODE HERE
+        Node root = new Node(0, MapServer.ROOT_ULLON, MapServer.ROOT_ULLAT, MapServer.ROOT_LRLON,
+                MapServer.ROOT_LRLAT, imgRoot, 8);
+        qt = new QuadTree(root, 8, imgRoot);
     }
 
     /**
@@ -43,10 +51,34 @@ public class Rasterer {
      */
     public Map<String, Object> getMapRaster(Map<String, Double> params) {
         // System.out.println(params);
+        double queryUllon = params.get("ullon");
+        double queryUllat = params.get("ullat");
+        double queryLrlon = params.get("lrlon");
+        double queryLrlat = params.get("lrlat");
+        if (queryLrlon < queryUllon || queryLrlat > queryUllat) {
+            throw new IllegalArgumentException("Wrong Longitude And Latitude");
+        }
+        double width = params.get("w");
+        double queryLonDPP = (queryLrlon - queryUllon) / width;
         Map<String, Object> results = new HashMap<>();
-        System.out.println("Since you haven't implemented getMapRaster, nothing is displayed in "
-                           + "your browser.");
+        List<List<Node>> tempList = new ArrayList<>();
+        qt.getRaster(params, qt.root, queryLonDPP, results, tempList);
+        String[][] fileName = converNodeListToArray(tempList);
+        results.put("render_grid", fileName);
+
         return results;
+    }
+
+    private String[][] converNodeListToArray(List<List<Node>> list) {
+        String[][] result = new String[list.size()][];
+        for (int i = 0; i < list.size(); i++) {
+            List<Node> currRow = list.get(i);
+            result[i] = new String[currRow.size()];
+            for (int j = 0; j < currRow.size(); j++) {
+                result[i][j] = currRow.get(i).dir + IMGFORMAT;
+            }
+        }
+        return result;
     }
 
 }
