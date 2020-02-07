@@ -7,8 +7,8 @@ public class QuadTree {
     String imgAddress;
 
     public QuadTree(Node node, int level, String imgRoot) {
-        root = autoAddChild(node, level);
         imgAddress = imgRoot;
+        root = autoAddChild(node, level);
     }
 
     private Node autoAddChild(Node node, int level) {
@@ -16,20 +16,22 @@ public class QuadTree {
             return node;
         } else {
             // upper left child
-            int index = node.index * 10 + 1;
-            double latInterval = (node.upperLeftLatitude - node.lowerRightLatitude) / 2;
-            double lonInterval = (node.lowerRightLongitude - node.upperLeftLongitude) / 2;
-            double upperLeftLatitude = node.upperLeftLatitude;
-            double upperLeftLongitude = node.upperLeftLongitude;
-            double lowerRightLatitude = node.lowerRightLatitude + latInterval;
-            double lowerRightLongitude = node.lowerRightLongitude - lonInterval;
-            node.addChild(autoAddChild(node, level - 1));
+            int index = node.getIndex() * 10 + 1;
+            double latInterval = (node.getUpperLeftLatitude() - node.getLowerRightLatitude()) / 2;
+            double lonInterval = (node.getLowerRightLongitude() - node.getUpperLeftLongitude()) / 2;
+            double upperLeftLatitude = node.getUpperLeftLatitude();
+            double upperLeftLongitude = node.getUpperLeftLongitude();
+            double lowerRightLatitude = node.getLowerRightLatitude() + latInterval;
+            double lowerRightLongitude = node.getLowerRightLongitude() - lonInterval;
+            Node child = new Node(index, upperLeftLongitude, upperLeftLatitude, lowerRightLongitude,
+                    lowerRightLatitude, imgAddress, level - 1);
+            node.addChild(autoAddChild(child, level - 1));
 
             // upper right child
             index += 1;
             lowerRightLongitude += lonInterval;
             upperLeftLongitude += lonInterval;
-            Node child = new Node(index, upperLeftLongitude, upperLeftLatitude, lowerRightLongitude,
+            child = new Node(index, upperLeftLongitude, upperLeftLatitude, lowerRightLongitude,
                     lowerRightLatitude, imgAddress, level - 1);
             node.addChild(autoAddChild(child, level - 1));
 
@@ -74,22 +76,22 @@ public class QuadTree {
                 result.put("depth",root.level - n.level);
                 // set ul_lon, ul_lat, lr_lon, lr_lat
                 if (!result.containsKey("raster_ul_lon")) {
-                    result.put("raster_ul_lon", n.upperLeftLongitude);
-                    result.put("raster_ul_lat", n.upperLeftLatitude);
-                    result.put("raster_lr_lon", n.lowerRightLongitude);
-                    result.put("raster_lr_lat", n.lowerRightLatitude);
+                    result.put("raster_ul_lon", n.getUpperLeftLongitude());
+                    result.put("raster_ul_lat", n.getUpperLeftLatitude());
+                    result.put("raster_lr_lon", n.getLowerRightLongitude());
+                    result.put("raster_lr_lat", n.getLowerRightLatitude());
                 } else {
-                    if ((double) result.get("raster_ul_lon") > n.upperLeftLongitude) {
-                        result.put("raster_ul_lon", n.upperLeftLongitude);
+                    if ((double) result.get("raster_ul_lon") > n.getUpperLeftLongitude()) {
+                        result.put("raster_ul_lon", n.getUpperLeftLongitude());
                     }
-                    if ((double) result.get("raster_ul_lat") < n.upperLeftLatitude) {
-                        result.put("raster_ul_lat", n.upperLeftLatitude);
+                    if ((double) result.get("raster_ul_lat") < n.getUpperLeftLatitude()) {
+                        result.put("raster_ul_lat", n.getUpperLeftLatitude());
                     }
-                    if ((double) result.get("raster_lr_lon") < n.lowerRightLongitude) {
-                        result.put("raster_ul_lon", n.lowerRightLongitude);
+                    if ((double) result.get("raster_lr_lon") < n.getLowerRightLongitude()) {
+                        result.put("raster_ul_lon", n.getLowerRightLongitude());
                     }
-                    if ((double) result.get("raster_lr_lat") > n.lowerRightLatitude) {
-                        result.put("raster_lr_lat", n.lowerRightLatitude);
+                    if ((double) result.get("raster_lr_lat") > n.getLowerRightLatitude()) {
+                        result.put("raster_lr_lat", n.getLowerRightLatitude());
                     }
                 }
                 // add node to list
@@ -105,7 +107,7 @@ public class QuadTree {
                         List<Node> currRow = nodeList.get(index);
                         Node firstNode = currRow.get(0);
                         // find the row to contain this node
-                        if (firstNode.upperLeftLatitude == n.upperLeftLatitude) {
+                        if (firstNode.getUpperLeftLatitude() == n.getUpperLeftLatitude()) {
                             insertNodeIntoRow(n,currRow);
                             existRow = true;
                         }
@@ -130,7 +132,7 @@ public class QuadTree {
     private void insertNodeIntoRow(Node n, List<Node> row){
         for (int i = 0; i < row.size(); i++) {
             Node compare = row.get(i);
-            if (compare.upperLeftLongitude > n.upperLeftLongitude) {
+            if (compare.getUpperLeftLongitude() > n.getUpperLeftLongitude()) {
                 // add this node into this position
                 row.add(i,n);
                 return;
@@ -138,69 +140,5 @@ public class QuadTree {
         }
         // add this node into the last position
         row.add(n);
-    }
-
-    private class Node implements Comparable<Node> {
-        private double upperLeftLongitude;
-        private double upperLeftLatitude;
-        private double lowerRightLongitude;
-        private double lowerRightLatitude;
-
-        private int index;
-        Node[] children;
-        int childNum;
-        String dir;
-        int level;
-
-        public Node(int n, double ullon, double ullat, double lrlon, double lrlat, String rootDir, int depth) {
-            if (n == 0) {
-                dir = rootDir + "root";
-            } else {
-                dir = rootDir + n;
-            }
-            upperLeftLongitude = ullon;
-            upperLeftLatitude = ullat;
-            lowerRightLongitude = lrlon;
-            lowerRightLatitude = lrlat;
-            childNum = 0;
-            children = new Node[4];
-            level = depth;
-        }
-
-        private void addChild(Node node) {
-            if (childNum < 4) {
-                children[childNum++] = node;
-            }
-        }
-
-        public double getLonDPP() {
-            return (lowerRightLongitude - upperLeftLongitude) / MapServer.TILE_SIZE;
-        }
-
-        public boolean intersectQueryBox(double query_ulX, double query_ulY, double query_lrX, double query_lrY) {
-            if (upperLeftLongitude > query_lrX || upperLeftLatitude > query_lrY ||
-                    lowerRightLongitude < query_ulX || lowerRightLatitude < query_ulY) {
-                return false;
-            }
-            return true;
-        }
-
-        @Override
-        public int compareTo(Node o) {
-            if (this.upperLeftLatitude == o.upperLeftLatitude) {
-                if (this.upperLeftLongitude < o.upperLeftLongitude) {
-                    return -1;
-                } else {
-                    return 1;
-                }
-            } else {
-                if (this.upperLeftLatitude > o.upperLeftLatitude) {
-                    return -1;
-                } else {
-                    return 1;
-                }
-            }
-        }
-
     }
 }
