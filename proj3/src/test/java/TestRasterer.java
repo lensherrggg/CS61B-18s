@@ -30,7 +30,7 @@ public class TestRasterer {
 
     @Before
     public void setUp() throws Exception {
-        rasterer = new Rasterer(IMG_ROOT);
+        rasterer = new Rasterer();
     }
 
     @Test

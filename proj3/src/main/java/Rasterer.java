@@ -1,7 +1,5 @@
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class provides all code necessary to take a query box and produce
@@ -10,15 +8,13 @@ import java.util.List;
  * not draw the output correctly.
  */
 public class Rasterer {
-    public static final String IMGFORMAT = ".png";
-    private QuadTree qt;
+    private final double Sl = 28820;
+    private final double startPixel = ((MapServer.ROOT_LRLON - MapServer.ROOT_ULLON) / MapServer.TILE_SIZE) * Sl;
+    private final double lonDifference = MapServer.ROOT_LRLON - MapServer.ROOT_ULLON;
+    private final double latDifference = MapServer.ROOT_ULLAT - MapServer.ROOT_LRLAT;
 
-    /** imgRoot is the name of the image directory*/
-    public Rasterer(String imgRoot) {
+    public Rasterer() {
         // YOUR CODE HERE
-        Node root = new Node(0, MapServer.ROOT_ULLON, MapServer.ROOT_ULLAT, MapServer.ROOT_LRLON,
-                MapServer.ROOT_LRLAT, imgRoot, 8);
-        qt = new QuadTree(root, 8, imgRoot);
     }
 
     /**
@@ -50,35 +46,143 @@ public class Rasterer {
      *                    forget to set this to true on success! <br>
      */
     public Map<String, Object> getMapRaster(Map<String, Double> params) {
+        Double queryLrlon = params.get("lrlon");
+        Double queryLrlat = params.get("lrlat");
+        Double queryUllon = params.get("ullon");
+        Double queryUllat = params.get("ullat");
+        Double queryWidth = params.get("w");
         // System.out.println(params);
-        double queryUllon = params.get("ullon");
-        double queryUllat = params.get("ullat");
-        double queryLrlon = params.get("lrlon");
-        double queryLrlat = params.get("lrlat");
-        if (queryLrlon < queryUllon || queryLrlat > queryUllat) {
-            throw new IllegalArgumentException("Wrong Longitude And Latitude");
-        }
-        double width = params.get("w");
-        double queryLonDPP = (queryLrlon - queryUllon) / width;
+        boolean check = checkParams(queryLrlon, queryUllon, queryLrlat, queryUllat);
+        double LonDPP = calcLonDPP(queryLrlon, queryUllon, queryWidth);
+        int depth = calcDepth(LonDPP);
+        double[] longitude = getLongitude(depth, queryUllon, queryLrlon);
+        double[] latitude = getLatitude(depth, queryLrlat, queryUllat);
+        String[][] renderGrid = renderGrid(depth, (int) longitude[1], (int) longitude[3],
+                (int) latitude[1], (int) latitude[3]);
         Map<String, Object> results = new HashMap<>();
-        List<List<Node>> tempList = new ArrayList<>();
-        qt.getRaster(params, qt.root, queryLonDPP, results, tempList);
-        String[][] fileName = converNodeListToArray(tempList);
-        results.put("render_grid", fileName);
+
+        results.put("raster_ul_lon", longitude[0]);
+        results.put("raster_ul_lat", latitude[0]);
+        results.put("raster_lr_lon", longitude[2]);
+        results.put("raster_lr_lat", latitude[2]);
+        results.put("depth", depth);
+        results.put("query_success", check);
+        results.put("render_grid", renderGrid);
 
         return results;
     }
 
-    private String[][] converNodeListToArray(List<List<Node>> list) {
-        String[][] result = new String[list.size()][];
-        for (int i = 0; i < list.size(); i++) {
-            List<Node> currRow = list.get(i);
-            result[i] = new String[currRow.size()];
-            for (int j = 0; j < currRow.size(); j++) {
-                result[i][j] = currRow.get(i).dir + IMGFORMAT;
+    private boolean checkParams(double queryLrlon, double queryUllon, double queryLrlat, double queryUllat) {
+        if (queryUllon > MapServer.ROOT_LRLON || queryLrlon < MapServer.ROOT_ULLON ||
+                queryUllat < MapServer.ROOT_LRLAT || queryLrlat > MapServer.ROOT_ULLAT) {
+            return false;
+        }
+        return true;
+    }
+
+    private double calcLonDPP(double lrlon, double ullon, double width) {
+        double LonDPP = (lrlon - ullon) / width;
+        double feetPerPixel = LonDPP * Sl;
+
+        return feetPerPixel;
+    }
+
+    private int calcDepth(double feetPerPixel) {
+        int count = 1;
+        double initPixel = startPixel / 2;
+        for (int i = 0; i < 8; i++) {
+            if (count == 7) {
+                return count;
+            }
+            if (feetPerPixel > initPixel) {
+                return count;
+            }
+            initPixel = initPixel / 2;
+            count += 1;
+        }
+        return 7;
+    }
+
+    private double[] getLatitude(int depth, double requireMinLat, double requireMaxLat) {
+        double diffInDepth = latDifference / Math.pow(2, depth);
+        int countMin = 0;
+        double[] results = new double[4];
+        double lat = MapServer.ROOT_ULLAT;
+
+        for (int i = 0; i < Math.pow(2, depth); i++) {
+            if (requireMaxLat > lat - diffInDepth) {
+                results[0] = lat;
+                results[1] = countMin;
+                break;
+            }
+            lat -= diffInDepth;
+            countMin += 1;
+        }
+
+        for (int i = countMin; i <= Math.pow(2, depth); i++) {
+            if (i == Math.pow(2, depth)) {
+                results[2] = MapServer.ROOT_LRLAT;
+                results[3] = i - 1;
+                break;
+            }
+            if (requireMinLat > lat - diffInDepth) {
+                results[2] = lat - diffInDepth;
+                results[3] = i;
+                break;
+            }
+            lat -= diffInDepth;
+        }
+        return results;
+    }
+
+    private double[] getLongitude(int depth, double requireMinLon, double requireMaxLon) {
+        double diffInDepth = lonDifference / Math.pow(2, depth);
+        int countMin = 0;
+        double[] results = new double[4];
+        double lon = MapServer.ROOT_ULLON;
+
+        for (int i = 0; i < Math.pow(2, depth); i++) {
+            if (requireMinLon < lon + diffInDepth) {
+                results[0] = lon;
+                results[1] = countMin;
+                break;
+            }
+            lon += diffInDepth;
+            countMin += 1;
+        }
+
+        for (int i = countMin; i <= Math.pow(2, depth); i++) {
+            if (i == Math.pow(2, depth)) {
+                results[2] = MapServer.ROOT_LRLON;
+                results[3] = i - 1;
+                break;
+            }
+            if (requireMaxLon < lon + diffInDepth) {
+                results[2] = lon + diffInDepth;
+                results[3] = i;
+                break;
+            }
+            lon += diffInDepth;
+        }
+        return results;
+    }
+
+    private String[][] renderGrid(int depth, int lonStart, int lonEnd, int latStart, int latEnd) {
+        String[][] results = new String[latEnd - latStart + 1][lonEnd - lonStart + 1];
+        for (int i = latStart; i <= latEnd; i++) {
+            for (int j = lonStart; j <= lonEnd; j++) {
+                if (i - latStart < 0 || j - lonStart < 0) {
+                    System.out.println("break happens in renderGrid");
+                    break;
+                } else {
+                    results[i - latStart][j - lonStart]
+                            = "d" + depth + "_x" + j + "_y" + i + ".png";
+                }
+
             }
         }
-        return result;
+        return results;
     }
 
 }
+

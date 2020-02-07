@@ -1,84 +1,47 @@
-public class Node implements Comparable<Node> {
-    private double upperLeftLongitude;
-    private double upperLeftLatitude;
-    private double lowerRightLongitude;
-    private double lowerRightLatitude;
+import java.util.List;
+import java.util.ArrayList;
 
-    private int index;
-    Node[] children;
-    int childNum;
-    String dir;
-    int level;
+public class Node {
+    private long id;
+    private double lat;
+    private double lon;
+    private List connections;
+    private Double priority = Double.MAX_VALUE;
 
-    public Node(int n, double ullon, double ullat, double lrlon, double lrlat, String rootDir, int depth) {
-        if (n == 0) {
-            dir = rootDir + "root";
-        } else {
-            dir = rootDir + n;
-        }
-        upperLeftLongitude = ullon;
-        upperLeftLatitude = ullat;
-        lowerRightLongitude = lrlon;
-        lowerRightLatitude = lrlat;
-        index = n;
-        childNum = 0;
-        children = new Node[4];
-        level = depth;
+    public double getPriority() {
+        return priority;
     }
 
-    public double getUpperLeftLongitude() {
-        return upperLeftLongitude;
+    public void setPriority(double priority) {
+        this.priority = priority;
     }
 
-    public double getUpperLeftLatitude() {
-        return upperLeftLatitude;
+    public Node(long id, double lat, double lon) {
+        this.id = id;
+        this.lat = lat;
+        this.lon = lon;
+        connections = new ArrayList<Long>();
     }
 
-    public double getLowerRightLongitude() {
-        return lowerRightLongitude;
+    public long getId() {
+        return id;
     }
 
-    public double getLowerRightLatitude() {
-        return lowerRightLatitude;
+    public double getLat() {
+        return lat;
     }
 
-    public int getIndex() {
-        return index;
+    public double getLon() {
+        return lon;
     }
 
-    public void addChild(Node node) {
-        if (childNum < 4) {
-            children[childNum++] = node;
+    public List<Long> getConnections() {
+        return connections;
+    }
+
+    public void addConnection(long i) {
+        if (!connections.contains(i) && i != id) {
+            connections.add(i);
         }
     }
-
-    public double getLonDPP() {
-        return (lowerRightLongitude - upperLeftLongitude) / MapServer.TILE_SIZE;
-    }
-
-    public boolean intersectQueryBox(double query_ulX, double query_ulY, double query_lrX, double query_lrY) {
-        if (upperLeftLongitude > query_lrX || upperLeftLatitude < query_lrY ||
-                lowerRightLongitude < query_ulX || lowerRightLatitude > query_ulY) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public int compareTo(Node o) {
-        if (this.upperLeftLatitude == o.upperLeftLatitude) {
-            if (this.upperLeftLongitude < o.upperLeftLongitude) {
-                return -1;
-            } else {
-                return 1;
-            }
-        } else {
-            if (this.upperLeftLatitude > o.upperLeftLatitude) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
-    }
-
 }

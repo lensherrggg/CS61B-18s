@@ -90,7 +90,7 @@ public class MapServer {
      **/
     public static void initialize() {
         graph = new GraphDB(OSM_DB_PATH);
-        rasterer = new Rasterer(IMG_ROOT);
+        rasterer = new Rasterer();
     }
 
     public static void main(String[] args) {
