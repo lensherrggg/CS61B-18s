@@ -17,7 +17,42 @@ public class RadixSort {
      */
     public static String[] sort(String[] asciis) {
         // TODO: Implement LSD Sort
-        return null;
+        String[] sortedArr = new String[asciis.length];
+        System.arraycopy(asciis, 0, sortedArr, 0, asciis.length);
+        String[] temp = new String[asciis.length];
+        int lengthInc = 0;
+        boolean sorted = false;
+        while (!sorted) {
+            sorted = true;
+            int[] digitsIndex = new int[10];
+            int[] digitArr = new int[sortedArr.length];
+            for (int i = 0; i < sortedArr.length; i++) {
+                int index = sortedArr[i].length() - 1 - lengthInc;
+                if (index > 0) {
+                    sorted = false;
+                }
+                if (index >= 0) {
+                    digitArr[i] = (int) (sortedArr[i].charAt(index) - '0');
+                } else {
+                    digitArr[i] = 0;
+                }
+                digitsIndex[digitArr[i]] += 1;
+            }
+
+            for (int i = 0; i < 9; i++) {
+                digitsIndex[i + 1] = digitsIndex[i] + digitsIndex[i + 1];
+            }
+
+            for (int i = sortedArr.length - 1; i >= 0; i--) {
+                digitsIndex[digitArr[i]] -= 1;
+                int index = digitsIndex[digitArr[i]];
+                temp[index] = sortedArr[i];
+            }
+
+            lengthInc += 1;
+            System.arraycopy(temp, 0, sortedArr, 0, sortedArr.length);
+        }
+        return sortedArr;
     }
 
     /**
